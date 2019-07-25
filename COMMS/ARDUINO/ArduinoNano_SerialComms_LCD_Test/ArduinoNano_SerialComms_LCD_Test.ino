@@ -43,6 +43,9 @@
 // include the library code:
 #include <LiquidCrystal.h>
 
+#define BAUD  1000000
+//#define BAUD  115200
+
 #define VERSION 0.0
 #define DATA_DIR_PIN  2
 
@@ -55,8 +58,14 @@ const int rs = 9, en = 8, d4 = 7, d5 = 6, d6 = 5, d7 = 4;
 
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
+uint16_t packetSize = 64;
+uint16_t byteCount = 0;
+uint16_t packetCount = 0;
+uint16_t targetByteNum = 64;
+uint16_t checksum = 0;
+
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(BAUD);
   pinMode(DATA_DIR_PIN, OUTPUT);
   digitalWrite(DATA_DIR_PIN, RS485_RECEIVE);
   
@@ -70,7 +79,7 @@ void setup() {
   delay(2000);
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("SER:");
+  lcd.print("PKT:"); // packet num
 }
 
 void loop() {
@@ -79,24 +88,21 @@ void loop() {
   uint8_t rowIndex = 0;
   while(Serial.available() > 0){
     uint8_t inByte = Serial.read();
-    Serial.write(inByte);
-    lcd.setCursor(charIndex, rowIndex);
-    if(charIndex <= 15 && rowIndex <= 1){
+    byteCount++;
+    checksum = (checksum + inByte) % 65535;
+    if (byteCount == targetByteNum) {
+      lcd.setCursor(charIndex, rowIndex);
+      packetCount++;
+      lcd.print(packetCount);
+      lcd.print(" *:"); // magic byte
       lcd.print(inByte);
+      lcd.setCursor(0, 1);
+      lcd.print("CHK: ");
+      lcd.print(checksum);
+      checksum = 0;
+      byteCount = 0;
+      Serial.write(36); // confirm recv
     }
-    else if(charIndex > 15){
-      if(rowIndex < 1){
-        charIndex = 0;
-        rowIndex = 1;
-      }
-      lcd.setCursor(0,1);
-      lcd.print(inByte);
-    } else {
-      //SCREEN OVERFLOW
-      //DO NOTHING
-    }
-     charIndex += 4;
   }
   Serial.println();
 }
-

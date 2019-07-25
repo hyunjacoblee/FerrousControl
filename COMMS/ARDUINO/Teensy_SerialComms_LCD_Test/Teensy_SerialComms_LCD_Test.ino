@@ -53,12 +53,18 @@
 // with the arduino pin number it is connected to
 const int rs = 4, en = 5, d4 = 6, d5 = 7, d6 = 8, d7 = 9;
 
-
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+const uint16_t packetSize = 64;
+uint16_t byteCount = 0;
+int packetCount = 0;
+uint8_t byteBuf[packetSize];
+uint16_t checksum = 0;
+uint8_t numDuinos = 1;
 
 void setup() {
   Serial.begin(1000000);
-  Serial1.begin(115200);
+  Serial1.begin(1000000);
 
   pinMode(DATA_DIR_PIN, OUTPUT);
   digitalWrite(DATA_DIR_PIN, RS485_TRANSMIT);
@@ -73,33 +79,47 @@ void setup() {
   delay(2000);
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("SER:");
+  lcd.print("PKT:"); // packet num
+}
+
+void waitForDuinos() {
+  uint8_t count = numDuinos;
+  while (count > 0) {
+    uint8_t rcv = Serial1.read();
+    if (rcv == 36) { // ascii dollarsign
+      --count;
+    }
+  }
 }
 
 void loop() {
   lcd.setCursor(4,0);
   uint8_t charIndex = 4;
   uint8_t rowIndex = 0;
+
   while(Serial.available() > 0){
     uint8_t inByte = Serial.read();
-    Serial1.write(inByte);
-    lcd.setCursor(charIndex, rowIndex);
-    if(charIndex <= 15 && rowIndex <= 1){
-      lcd.print(inByte);
-    }
-    else if(charIndex > 15){
-      if(rowIndex < 1){
-        charIndex = 0;
-        rowIndex = 1;
-      }
+    checksum = (checksum + inByte) % 65535;
+    byteBuf[byteCount++] = inByte;
+    //Serial1.write(inByte);
+    //lcd.setCursor(charIndex, rowIndex);
+    if(byteCount == packetSize){
+      lcd.setCursor(4,0);
+      Serial1.write(byteBuf, sizeof(byteBuf));
+      //Serial.write(byteBuf, sizeof(byteBuf)); // debug: send back to py script
+      packetCount++;
+      //lcd.print(inByte);
+      lcd.print(packetCount);
+      lcd.print(" LEN:"); // packet length
+      lcd.print(byteCount);
       lcd.setCursor(0,1);
-      lcd.print(inByte);
-    } else {
-      //SCREEN OVERFLOW
-      //DO NOTHING
+      lcd.print("CHK: ");
+      lcd.print(checksum);
+      checksum = 0;
+      byteCount = 0;
+      //waitForDuinos(); // wait for arduino response
+      Serial.write('$');
     }
-     charIndex += 4;
   }
   Serial.println();
 }
-
