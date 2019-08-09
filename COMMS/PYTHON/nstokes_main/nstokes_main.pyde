@@ -5,6 +5,7 @@ from easing_functions import *
 from random import randint 
 from time import sleep, time
 import math
+import struct
 from threading import Thread
 from Queue import Queue
 
@@ -45,11 +46,12 @@ counter = 0
 
 #Serial Connection
 magnetPort = None
+magnetPort2 = None
 INITIALIZED = False
 MAGNET_CONNECTION = False
 
 STARTING = 0
-sf = 10
+sf = 20
 
 #TOGGLES
 AMOEBA_TOGGLE = False
@@ -73,17 +75,24 @@ nay1 = randint(0, WIDTH)
 
 s_tracker = []
 
-def threadSerial(infosend):
-    global magnetPort
+def sendSerial(infosend, port):
+    global magnetPort, magnetPort2
 
     if infosend != None:
-        magnetPort.write(infosend)
-
+        # magnetPort.write(infosend)
+        if port == 0:
+            for i in infosend:
+                magnetPort.write(i)
+        else:
+            for i in infosend:
+                magnetPort2.write(i)
 # Send Queue
 sendQueue = Queue()
-sendThread = Thread(target = threadSerial, args = [None])
+# sendThread = Thread(target = sendSerial, args = [None])
 busyCount = 0
 openCount = 0
+startTime = time()
+startFrame = 0
 
 def reordinator(initial_list):
     reordered_list = []
@@ -95,9 +104,11 @@ def reordinator(initial_list):
                     for mag_y in range(4):
                         for mag_x in range(4):
                             index = mag_x + mag_y * 40 + quad_x * 4 + quad_y * 160 + panel_x * 8 + panel_y * 320
-                            reordered_list.append(initial_list[index])
+                            if len(initial_list) < WIDTH*2:
+                                reordered_list.append(initial_list[index])
                             
     return reordered_list
+    # return initial_list
 
 def setup():
     global FLUID, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, sf, w, yvalues
@@ -113,9 +124,10 @@ def setup():
      
     #Generating coordinates for snake movements.
     snake(WIDTH)
+    # frameRate(10)
 
 def draw():
-    global s_tracker, MAGNET_CONNECTION, INITIALIZED, magnetPort, randposX, randposY, npcounter, counter, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, VEL_H, VEL_HPREV, VEL_V, VEL_VPREV, DENS, DENS_PREV, STARTING, BUBBLE_TOGGLE, SNEK_TOGGLE, AMOEBA_TOGGLE, directionX, directionY, amplitude, xspacing, yvalues, toggle, ccounter, theta, location_tracker, sf, angle, period, sendThread, busyCount, openCount
+    global s_tracker, MAGNET_CONNECTION, INITIALIZED, magnetPort, randposX, randposY, npcounter, counter, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, VEL_H, VEL_HPREV, VEL_V, VEL_VPREV, DENS, DENS_PREV, STARTING, BUBBLE_TOGGLE, SNEK_TOGGLE, AMOEBA_TOGGLE, directionX, directionY, amplitude, xspacing, yvalues, toggle, ccounter, theta, location_tracker, sf, angle, period, sendThread, busyCount, openCount, startTime, startFrame
     
     background(0)
     
@@ -186,6 +198,7 @@ def draw():
                 
         reordered_list = reordinator(carr)
         
+        
         # byte message to send
         byteMessage = ''
         # for idx, i in enumerate(carr):
@@ -208,31 +221,56 @@ def draw():
     
         for dweeners in range(5):
             for entries in range(320):
-                val = dween_num * 25 + ((frameCount % 1000) / 100)
-                if entry_num % 2 == 0:
-                    val+=1                
+                val = dween_num * 25 + ((frameCount % 30) / 3)
+                val = 120 + (frameCount % 30) / 2
+                # if val > 127:
+                #     val = val / 2
+                #     stringByte = ""
+                #     for i in range(7):
+                #         stringByte = chr(val % 2) + stringByte;
+                #         val = val / 2;
+                #     stringByte = "-" + stringByte;
+                #     byteMessage += stringByte
+                # else:
+                #     byteMessage += chr(val)
+                # if entry_num % 2 == 0:
+                #     val+=1                
                 msg_check.append(val)
                 byteMessage += chr(val)
                 entry_num+=1
+                # magnetPort.write(val)
             dween_num+=1
-        print(msg_check, len(msg_check))
-                
-            
-
+        # print(msg_check, len(msg_check), frameCount)
+        # print(byteMessage)
+        # print(msg_check[1])
+        t1 = Thread(target=sendSerial, args=[msg_check, 0])
+        t2 = Thread(target=sendSerial, args=[msg_check, 1])
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+        # sendSerial(byteMessage)
+        nowTime = time()
+        if nowTime - startTime >= 1.0:
+            print(nowTime - startTime, frameCount - startFrame, frameCount, msg_check[1])
+            startTime = nowTime
+            startFrame = frameCount
+        magnetPort.clear()
+        # print(frameCount)
         # thread logic
-        if sendThread.isAlive():
-                busyCount += 1
-                openCount = 0
-                # print("Thread BUSY", busyCount)
-                pass
-        else:
-            # print("regular")
-            sendThread = Thread(target = threadSerial, args = [byteMessage])
-            sendThread.start()
-            busyCount = 0
-            openCount += 1
-            # print("OPEN Thread", openCount)
-            # print("Thread GOOD!", busyCount)
+        # if sendThread.isAlive():
+        #         busyCount += 1
+        #         openCount = 0
+        #         print("Thread BUSY", busyCount)
+        #         pass
+        # else:
+        #     # print("regular")
+        #     sendThread = Thread(target = sendSerial, args = [byteMessage])
+        #     sendThread.start()
+        #     busyCount = 0
+        #     openCount += 1
+        #     print("OPEN Thread", openCount)
+        #     # print("Thread GOOD!", busyCount)
 
 def keyPressed():
     global DENS, DENS_PREV, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, BUBBLE_TOGGLE, SNEK_TOGGLE, D_RATE, AMOEBA_TOGGLE, MAGNET_CONNECTION
@@ -389,10 +427,13 @@ def generate_amoeba():
 
 #Port Initialization
 def initialize_port():
-    global INITIALIZED, magnetPort
+    global INITIALIZED, magnetPort, magnetPort2
     print(Serial.list())
     arduinoPort = Serial.list()[3]
-    magnetPort = Serial(this, arduinoPort, 1000000)
+    magnetPort = Serial(this, arduinoPort, 2000000)
+    magnetPort2 = Serial(this, Serial.list()[4], 2000000)
+    # magnetPort = Serial(this, arduinoPort, 115200)
+
     
     INITIALIZED = True
 

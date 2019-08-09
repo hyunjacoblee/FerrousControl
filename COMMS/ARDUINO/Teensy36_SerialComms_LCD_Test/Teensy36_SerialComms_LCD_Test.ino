@@ -64,6 +64,12 @@ uint8_t buffer_2[320];
 uint8_t buffer_3[320];
 uint8_t buffer_4[320];
 uint8_t buffer_5[320];
+//int byteBuffer[packetSize];
+//int buffer_1[320];
+//int buffer_2[320];
+//int buffer_3[320];
+//int buffer_4[320];
+//int buffer_5[320];
 uint32_t packetCount = 0;
 uint32_t byteCount = 0;
 uint16_t checksum = 0;
@@ -73,13 +79,13 @@ uint8_t checkByte = 0;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void setup() {
-  Serial.begin(1000000);
+  Serial.begin(2000000);
   Serial1.begin(115200);
 //  Serial1.begin(1000000);
-  Serial2.begin(115200);
-  Serial3.begin(115200);
-  Serial4.begin(115200);
-  Serial5.begin(115200);
+//  Serial2.begin(115200);
+//  Serial3.begin(115200);
+//  Serial4.begin(115200);
+//  Serial5.begin(115200);
 
   pinMode(DATA_DIR_PIN_1, OUTPUT);
   digitalWrite(DATA_DIR_PIN_1, RS485_TRANSMIT);
@@ -121,30 +127,39 @@ void loop() {
   uint8_t rowIndex = 0;
   if (Serial.available()) {
     // wait a bit for the entire message to arrive
-    delay(24);
+//    delay(24);
     while(Serial.available() > 0){
-      uint8_t inByte = Serial.read();
+        uint8_t inByte = Serial.read();
+//      int _inByte = Serial.read();
+//      uint8_t inByte;
+
+//      if (inByte < 0){
+//        inByte = _inByte + 255;
+//      }
+//      else{
+//        inByte = _inByte;
+//      }
 //      byteBuffer[byteCount++] = inByte;
 
       if(byteCount < 320) {
         buffer_1[byteCount] = inByte;
       }
-
-      else if (byteCount < 640) {
-        buffer_2[byteCount % 320] = inByte;
-      }
-
-      else if (byteCount < 960) {
-        buffer_3[byteCount % 320] = inByte;
-      }
-
-      else if (byteCount < 1080) {
-        buffer_4[byteCount % 320] = inByte;
-      }
-
-      else {
-        buffer_5[byteCount % 320] = inByte;
-      }
+//
+//      else if (byteCount < 640) {
+//        buffer_2[byteCount % 320] = inByte;
+//      }
+//
+//      else if (byteCount < 960) {
+//        buffer_3[byteCount % 320] = inByte;
+//      }
+//
+//      else if (byteCount < 1080) {
+//        buffer_4[byteCount % 320] = inByte;
+//      }
+//
+//      else {
+//        buffer_5[byteCount % 320] = inByte;
+//      }
 
       ++byteCount;
       
@@ -155,17 +170,17 @@ void loop() {
         Serial1.write(buffer_1, 320);
         Serial1.flush(); // block until sent
         
-        Serial2.write(buffer_2, 320);
-        Serial2.flush(); // block until sent
-
-        Serial3.write(buffer_3, 320);
-        Serial3.flush(); // block until sent
-
-        Serial4.write(buffer_4, 320);
-        Serial4.flush(); // block until sent
-
-        Serial5.write(buffer_5, 320);
-        Serial5.flush(); // block until sent
+//        Serial2.write(buffer_2, 320);
+//        Serial2.flush(); // block until sent
+//
+//        Serial3.write(buffer_3, 320);
+//        Serial3.flush(); // block until sent
+//
+//        Serial4.write(buffer_4, 320);
+//        Serial4.flush(); // block until sent
+//
+//        Serial5.write(buffer_5, 320);
+//        Serial5.flush(); // block until sent
 
         /*
         packetCount++;
@@ -186,7 +201,7 @@ void loop() {
         lcd.print("  ");
         byteCount = 0;
         checksum = 0;
-        Serial.write('$');
+//        Serial.write('$');
 
       }
 
@@ -194,7 +209,7 @@ void loop() {
 //
 //        lcd.setCursor(charIndex, rowIndex);
 //        lcd.print(inByte);
-        if(byteCount == 1599){
+        if(byteCount == 1217){
           checkByte = inByte;
         }
         
