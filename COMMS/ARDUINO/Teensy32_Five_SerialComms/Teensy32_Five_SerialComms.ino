@@ -116,7 +116,7 @@ void loop() {
   uint8_t rowIndex = 0;
   if (Serial.available()) {
     // wait a bit for the entire message to arrive
-    //    delay(24);
+    delay(24);
     while (Serial.available() > 0) {
       uint8_t inByte = Serial.read();
 
@@ -132,7 +132,10 @@ void loop() {
 
       checksum = (checksum + inByte) % 65535;
 
-      //Serial1.write(inByte);
+      if (byteCount == 320) {
+        checkByte = inByte;
+      }
+
       if (byteCount == packetSize) {
         Serial1.write(byteBuffer, 320);
         Serial1.flush(); // block until sent
@@ -164,9 +167,7 @@ void loop() {
       //
       //        lcd.setCursor(charIndex, rowIndex);
       //        lcd.print(inByte);
-      if (byteCount == 319) {
-        checkByte = inByte;
-      }
+
     }
   }
 }
