@@ -116,8 +116,7 @@ def reordinator(initial_list):
                     for mag_y in range(4):
                         for mag_x in range(4):
                             index = mag_x + mag_y * 40 + quad_x * 4 + quad_y * 160 + panel_x * 8 + panel_y * 320
-                            if len(initial_list) < WIDTH*2:
-                                reordered_list.append(initial_list[index])
+                            reordered_list.append(initial_list[index])
                             
     return reordered_list
     # return initial_list
@@ -206,7 +205,8 @@ def draw():
             initialize_port()
             
         carr = count()
-                
+        
+        print(carr)
         reordered_list = reordinator(carr)
         
         # byte message to send
@@ -220,6 +220,7 @@ def draw():
                 byteMessage+=chr(int(round(0.0)))
         # print(carr)
         # print(carr[820],mouseX, mouseY)
+        # print(reordered_list, len(reordered_list))
         
         # dummy values to prove sending
         # changes every 1000 frames (~3.3 seconds @ 30 fps)
@@ -245,8 +246,8 @@ def draw():
         #         #     byteMessage += chr(val)
         #         # if entry_num % 2 == 0:
         #         #     val+=1                
-        #         reordered_list.append(val)
-        #         byteMessage += chr(val)
+        #         reordered_list.append(int(val))
+        #         byteMessage += chr(int(val))
         #         entry_num+=1
         #         # magnetPort.write(val)
         #     dween_num+=1
@@ -275,7 +276,7 @@ def draw():
         # sendSerial(byteMessage)
         nowTime = time()
         if nowTime - startTime >= 1.0:
-            print(nowTime - startTime, frameCount - startFrame, frameCount, msg_check[1])
+            print(nowTime - startTime, frameCount - startFrame, frameCount, reordered_list[0])
             startTime = nowTime
             startFrame = frameCount
         # magnetPort.clear()
@@ -362,7 +363,7 @@ def ratio(x):
     elif (x * 128 / 32) > 127:
         return 127
     else:
-        return (x * 128 / 32)
+        return int(x * 128 / 32)
     
 def count():
     global DENS, WIDTH, FLUID 
