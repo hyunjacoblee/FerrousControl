@@ -73,7 +73,7 @@ uint16_t checksum = 0;
 
 uint8_t checkByte = 0;
 
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+//LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void setup() {
   Serial.begin(1000000);
@@ -96,18 +96,18 @@ void setup() {
   digitalWrite(DATA_DIR_PIN_5, RS485_TRANSMIT);
 
   // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
-  // Print a message to the LCD.
-  lcd.print("TEENSY: SER TEST");
-  lcd.setCursor(0, 1);
-  lcd.print("VER: ");
-  lcd.print(VERSION);
-  delay(2000);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  //lcd.print("PKT:");
-  lcd.print(" LEN:");
-  lcd.print(packetSize);
+//  lcd.begin(16, 2);
+//  // Print a message to the LCD.
+//  lcd.print("TEENSY: SER TEST");
+//  lcd.setCursor(0, 1);
+//  lcd.print("VER: ");
+//  lcd.print(VERSION);
+//  delay(2000);
+//  lcd.clear();
+//  lcd.setCursor(0, 0);
+//  //lcd.print("PKT:");
+//  lcd.print(" LEN:");
+//  lcd.print(packetSize);
 }
 
 void loop() {
@@ -150,13 +150,13 @@ void loop() {
           lcd.setCursor(0,1);
           lcd.print("CHK:");
           lcd.print(checksum);*/
-        lcd.setCursor(charIndex, rowIndex);
-        lcd.print(" LEN:");
-        lcd.print(byteCount);
-        lcd.setCursor(0, 1);
-        lcd.print("CHK:");
-        lcd.print(checkByte);
-        lcd.print("  ");
+//        lcd.setCursor(charIndex, rowIndex);
+//        lcd.print(" LEN:");
+//        lcd.print(byteCount);
+//        lcd.setCursor(0, 1);
+//        lcd.print("CHK:");
+//        lcd.print(checkByte);
+//        lcd.print("  ");
         byteCount = 0;
         checksum = 0;
         //        Serial.write('$');

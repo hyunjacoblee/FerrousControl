@@ -47,11 +47,11 @@ counter = 0
 #Serial Connection
 magnetPort = None
 magnetPort2 = None
-magnetPortAddresses = ['/dev/cu.usbmodem58040401',
-               '/dev/cu.usbmodem49270001',
-               '/dev/cu.usbmodem58130601',
-               '/dev/cu.usbmodem43318101',
-               '/dev/cu.usbmodem43318001']
+magnetPortAddresses = [u'/dev/cu.usbmodem58040401',
+               u'/dev/cu.usbmodem49270001',
+               u'/dev/cu.usbmodem58130601',
+               u'/dev/cu.usbmodem43318101',
+               u'/dev/cu.usbmodem43318001']
 magnetPorts = []
 INITIALIZED = False
 MAGNET_CONNECTION = False
@@ -83,15 +83,16 @@ nay1 = randint(0, WIDTH)
 s_tracker = []
 
 def sendSerial(infosend, port):
-    global magnetPorts
+    global magnetPort, magnetPorts
 
     if infosend != None:
-        print("sending to", port)
+        # print("sending to", port)
         for i in infosend:
             magnetPorts[port].write(i)
+            # magnetPort.write(i)
 
 # Send Queue
-sendQueue = Queue()
+# sendQueue = Queue()
 # sendThread = Thread(target = sendSerial, args = [None])
 busyCount = 0
 openCount = 0
@@ -251,7 +252,6 @@ def draw():
         t3 = Thread(target=sendSerial, args=[msg_check[960:1280], 3])
         t4 = Thread(target=sendSerial, args=[msg_check[1280:1600], 4])
 
-        print(len(msg_check[0:320]), len(msg_check[320:640]), len(msg_check[1280:1600]))
         t0.start()
         t1.start()
         t2.start()
@@ -263,6 +263,7 @@ def draw():
         t3.join()
         t4.join()
         
+        # sendSerial(msg_check[0:320], 0)
         # sendSerial(byteMessage)
         nowTime = time()
         if nowTime - startTime >= 1.0:
@@ -445,6 +446,9 @@ def initialize_port():
     print(Serial.list())
     # arduinoPort = Serial.list()[3]
     # magnetPort = Serial(this, arduinoPort, 1000000)
+    # magnetPort = Serial(this, u'/dev/cu.usbmodem58040401', 1000000)
+    # magnetPort = Serial(this, magnetPortAddresses[1], 1000000)
+
     # magnetPort2 = Serial(this, Serial.list()[4], 1000000)
     # magnetPort = Serial(this, arduinoPort, 115200)
     for each in magnetPortAddresses:
