@@ -206,7 +206,7 @@ def draw():
             
         carr = count()
         
-        print(carr)
+        # print(carr)
         reordered_list = reordinator(carr)
         
         # byte message to send
