@@ -224,40 +224,41 @@ def draw():
         # dummy values to prove sending
         # changes every 1000 frames (~3.3 seconds @ 30 fps)
         # values sent to each arduino alternates by 1
-        byteMessage = ''
-        msg_check = []
-        dween_num = 0
-        entry_num = 0
+        # byteMessage = ''
+        # reordered_list = []
+        # dween_num = 0
+        # entry_num = 0
     
-        for dweeners in range(5):
-            for entries in range(320):
-                val = dween_num * 25 + ((frameCount % 30) / 3)
-                val = 120 + (frameCount % 30) / 2
-                # if val > 127:
-                #     val = val / 2
-                #     stringByte = ""
-                #     for i in range(7):
-                #         stringByte = chr(val % 2) + stringByte;
-                #         val = val / 2;
-                #     stringByte = "-" + stringByte;
-                #     byteMessage += stringByte
-                # else:
-                #     byteMessage += chr(val)
-                # if entry_num % 2 == 0:
-                #     val+=1                
-                msg_check.append(val)
-                byteMessage += chr(val)
-                entry_num+=1
-                # magnetPort.write(val)
-            dween_num+=1
+        # for dweeners in range(5):
+        #     for entries in range(320):
+        #         val = dween_num * 25 + ((frameCount % 30) / 3)
+        #         val = 120 + (frameCount % 30) / 2
+        #         # if val > 127:
+        #         #     val = val / 2
+        #         #     stringByte = ""
+        #         #     for i in range(7):
+        #         #         stringByte = chr(val % 2) + stringByte;
+        #         #         val = val / 2;
+        #         #     stringByte = "-" + stringByte;
+        #         #     byteMessage += stringByte
+        #         # else:
+        #         #     byteMessage += chr(val)
+        #         # if entry_num % 2 == 0:
+        #         #     val+=1                
+        #         reordered_list.append(val)
+        #         byteMessage += chr(val)
+        #         entry_num+=1
+        #         # magnetPort.write(val)
+        #     dween_num+=1
         # print(msg_check, len(msg_check), frameCount)
         # print(byteMessage)
         # print(msg_check[1])
-        t0 = Thread(target=sendSerial, args=[msg_check[0:320], 0])
-        t1 = Thread(target=sendSerial, args=[msg_check[320:640], 1])
-        t2 = Thread(target=sendSerial, args=[msg_check[640:960], 2])
-        t3 = Thread(target=sendSerial, args=[msg_check[960:1280], 3])
-        t4 = Thread(target=sendSerial, args=[msg_check[1280:1600], 4])
+        
+        t0 = Thread(target=sendSerial, args=[reordered_list[0:320], 0])
+        t1 = Thread(target=sendSerial, args=[reordered_list[320:640], 1])
+        t2 = Thread(target=sendSerial, args=[reordered_list[640:960], 2])
+        t3 = Thread(target=sendSerial, args=[reordered_list[960:1280], 3])
+        t4 = Thread(target=sendSerial, args=[reordered_list[1280:1600], 4])
 
         t0.start()
         t1.start()
