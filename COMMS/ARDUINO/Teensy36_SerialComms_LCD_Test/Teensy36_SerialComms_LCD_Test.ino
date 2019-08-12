@@ -130,15 +130,13 @@ void loop() {
 //    delay(24);
     while(Serial.available() > 0){
         uint8_t inByte = Serial.read();
-//      int _inByte = Serial.read();
-//      uint8_t inByte;
 
-//      if (inByte < 0){
-//        inByte = _inByte + 255;
-//      }
-//      else{
-//        inByte = _inByte;
-//      }
+      if (inByte < 0){
+        inByte = 0;
+      }
+      else if (inByte > 127) {
+        inByte = 127;
+      }
 //      byteBuffer[byteCount++] = inByte;
 
       if(byteCount < 320) {

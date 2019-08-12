@@ -76,7 +76,7 @@ uint8_t checkByte = 0;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void setup() {
-  Serial.begin(2000000);
+  Serial.begin(1000000);
   Serial1.begin(115200);
   //  Serial1.begin(1000000);
   //  Serial2.begin(115200);
@@ -127,9 +127,8 @@ void loop() {
         inByte = 0;
       }
 
-      if (byteCount < 320) {
-        byteBuffer[++byteCount] = inByte;
-      }
+
+      byteBuffer[++byteCount] = inByte;
 
       checksum = (checksum + inByte) % 65535;
 

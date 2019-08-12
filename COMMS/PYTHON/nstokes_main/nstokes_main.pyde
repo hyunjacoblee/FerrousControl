@@ -86,6 +86,7 @@ def sendSerial(infosend, port):
     global magnetPorts
 
     if infosend != None:
+        print("sending to", port)
         for i in infosend:
             magnetPorts[port].write(i)
 
@@ -250,6 +251,7 @@ def draw():
         t3 = Thread(target=sendSerial, args=[msg_check[960:1280], 3])
         t4 = Thread(target=sendSerial, args=[msg_check[1280:1600], 4])
 
+        print(len(msg_check[0:320]), len(msg_check[320:640]), len(msg_check[1280:1600]))
         t0.start()
         t1.start()
         t2.start()
@@ -441,7 +443,7 @@ def generate_amoeba():
 def initialize_port():
     global INITIALIZED, magnetPort, magnetPort2, magnetPortAddresses, magnetPorts
     print(Serial.list())
-    arduinoPort = Serial.list()[3]
+    # arduinoPort = Serial.list()[3]
     # magnetPort = Serial(this, arduinoPort, 1000000)
     # magnetPort2 = Serial(this, Serial.list()[4], 1000000)
     # magnetPort = Serial(this, arduinoPort, 115200)
