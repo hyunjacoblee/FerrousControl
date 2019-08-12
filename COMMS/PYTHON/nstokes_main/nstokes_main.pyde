@@ -47,8 +47,15 @@ counter = 0
 #Serial Connection
 magnetPort = None
 magnetPort2 = None
+magnetPortAddresses = ['/dev/cu.usbmodem58040401',
+               '/dev/cu.usbmodem49270001',
+               '/dev/cu.usbmodem58130601',
+               '/dev/cu.usbmodem43318101',
+               '/dev/cu.usbmodem43318001']
+magnetPorts = []
 INITIALIZED = False
 MAGNET_CONNECTION = False
+
 
 STARTING = 0
 sf = 20
@@ -76,16 +83,12 @@ nay1 = randint(0, WIDTH)
 s_tracker = []
 
 def sendSerial(infosend, port):
-    global magnetPort, magnetPort2
+    global magnetPorts
 
     if infosend != None:
-        # magnetPort.write(infosend)
-        if port == 0:
-            for i in infosend:
-                magnetPort.write(i)
-        else:
-            for i in infosend:
-                magnetPort2.write(i)
+        for i in infosend:
+            magnetPorts[port].write(i)
+
 # Send Queue
 sendQueue = Queue()
 # sendThread = Thread(target = sendSerial, args = [None])
@@ -124,7 +127,6 @@ def setup():
      
     #Generating coordinates for snake movements.
     snake(WIDTH)
-    # frameRate(10)
 
 def draw():
     global s_tracker, MAGNET_CONNECTION, INITIALIZED, magnetPort, randposX, randposY, npcounter, counter, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, VEL_H, VEL_HPREV, VEL_V, VEL_VPREV, DENS, DENS_PREV, STARTING, BUBBLE_TOGGLE, SNEK_TOGGLE, AMOEBA_TOGGLE, directionX, directionY, amplitude, xspacing, yvalues, toggle, ccounter, theta, location_tracker, sf, angle, period, sendThread, busyCount, openCount, startTime, startFrame
@@ -198,7 +200,6 @@ def draw():
                 
         reordered_list = reordinator(carr)
         
-        
         # byte message to send
         byteMessage = ''
         # for idx, i in enumerate(carr):
@@ -243,19 +244,30 @@ def draw():
         # print(msg_check, len(msg_check), frameCount)
         # print(byteMessage)
         # print(msg_check[1])
-        t1 = Thread(target=sendSerial, args=[msg_check, 0])
-        t2 = Thread(target=sendSerial, args=[msg_check, 1])
+        t0 = Thread(target=sendSerial, args=[msg_check[0:320], 0])
+        t1 = Thread(target=sendSerial, args=[msg_check[320:640], 1])
+        t2 = Thread(target=sendSerial, args=[msg_check[640:960], 2])
+        t3 = Thread(target=sendSerial, args=[msg_check[960:1280], 3])
+        t4 = Thread(target=sendSerial, args=[msg_check[1280:1600], 4])
+
+        t0.start()
         t1.start()
         t2.start()
+        t3.start()
+        t4.start()
+        t0.join()
         t1.join()
         t2.join()
+        t3.join()
+        t4.join()
+        
         # sendSerial(byteMessage)
         nowTime = time()
         if nowTime - startTime >= 1.0:
             print(nowTime - startTime, frameCount - startFrame, frameCount, msg_check[1])
             startTime = nowTime
             startFrame = frameCount
-        magnetPort.clear()
+        # magnetPort.clear()
         # print(frameCount)
         # thread logic
         # if sendThread.isAlive():
@@ -427,12 +439,15 @@ def generate_amoeba():
 
 #Port Initialization
 def initialize_port():
-    global INITIALIZED, magnetPort, magnetPort2
+    global INITIALIZED, magnetPort, magnetPort2, magnetPortAddresses, magnetPorts
     print(Serial.list())
     arduinoPort = Serial.list()[3]
-    magnetPort = Serial(this, arduinoPort, 2000000)
-    magnetPort2 = Serial(this, Serial.list()[4], 2000000)
+    # magnetPort = Serial(this, arduinoPort, 1000000)
+    # magnetPort2 = Serial(this, Serial.list()[4], 1000000)
     # magnetPort = Serial(this, arduinoPort, 115200)
+    for each in magnetPortAddresses:
+        serialPort = Serial(this, each, 1000000)
+        magnetPorts.append(serialPort)
 
     
     INITIALIZED = True

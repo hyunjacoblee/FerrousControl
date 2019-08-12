@@ -43,7 +43,7 @@
 // include the library code:
 #include <LiquidCrystal.h>
 
-#define VERSION 3.10
+#define VERSION 3.20
 #define DATA_DIR_PIN_1  2
 #define DATA_DIR_PIN_2  6
 #define DATA_DIR_PIN_3  11
@@ -53,11 +53,13 @@
 #define RS485_TRANSMIT  HIGH
 #define RS485_RECEIVE   LOW
 
+#define TEENSY_SEGMENT  0
+
 // initialize the library by associating any needed LCD interface pin
 // with the arduino pin number it is connected to
 const int rs = 36, en =37, d4 = 38, d5 = 39, d6 = 14, d7 = 15;
 
-const uint16_t packetSize = 1600;
+const uint16_t packetSize = 320;
 uint8_t byteBuffer[packetSize];
 uint8_t buffer_1[320];
 uint8_t buffer_2[320];
