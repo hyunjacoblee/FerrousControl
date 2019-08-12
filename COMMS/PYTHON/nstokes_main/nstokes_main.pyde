@@ -47,11 +47,18 @@ counter = 0
 #Serial Connection
 magnetPort = None
 magnetPort2 = None
-magnetPortAddresses = [u'/dev/cu.usbmodem58040401',
-               u'/dev/cu.usbmodem49270001',
-               u'/dev/cu.usbmodem58130601',
-               u'/dev/cu.usbmodem43318101',
-               u'/dev/cu.usbmodem43318001']
+# Macbook
+# magnetPortAddresses = [u'/dev/cu.usbmodem58040401',
+#                u'/dev/cu.usbmodem49270001',
+#                u'/dev/cu.usbmodem58130601',
+#                u'/dev/cu.usbmodem43318101',
+#                u'/dev/cu.usbmodem43318001']
+# Mac Mini
+magnetPortAddresses = [u'/dev/cu.usbmodem5804040',
+               u'/dev/cu.usbmodem4927000',
+               u'/dev/cu.usbmodem5813060',
+               u'/dev/cu.usbmodem4331810',
+               u'/dev/cu.usbmodem4331800']
 magnetPorts = []
 INITIALIZED = False
 MAGNET_CONNECTION = False
