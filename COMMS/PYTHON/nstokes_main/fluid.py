@@ -63,7 +63,7 @@ class fluid:
                 for j in range(1, d_width + 1):
                     x[self.xy_coordinate(d_width, i, j)] = (x0[self.xy_coordinate(d_width, i, j)] + a * (x[self.xy_coordinate(d_width, i - 1, j)] + x[
                         self.xy_coordinate(d_width, i + 1, j)] + x[self.xy_coordinate(d_width, i, j - 1)] + x[self.xy_coordinate(d_width, i, j + 1)])) / c
-                    
+
             # self.set_bounds(d_width, b, x)
 
     def diffuse(self, d_width, b, dens, dens_prev, d_rate, time_space):
@@ -101,8 +101,15 @@ class fluid:
                 t0 = 1 - t1
 
                 tmp = s0 * (t0 * dens_prev[self.xy_coordinate(d_width, i0, j0)] + t1 * dens_prev[self.xy_coordinate(d_width, i0, j1)])
-                dens[self.xy_coordinate(d_width, i, j)] = tmp + s1 * (t0 * dens_prev[self.xy_coordinate(d_width, i1, j0)] + t1 * dens_prev[self.xy_coordinate(d_width, i1, j1)])
-
+                tmp = tmp + s1 * (t0 * dens_prev[self.xy_coordinate(d_width, i1, j0)] + t1 * dens_prev[self.xy_coordinate(d_width, i1, j1)])
+                
+                if tmp > 1:
+                    dens[self.xy_coordinate(d_width, i, j)] = 1
+                elif tmp < 0:
+                    dens[self.xy_coordinate(d_width, i, j)] = 0
+                else:
+                    dens[self.xy_coordinate(d_width, i, j)] = tmp
+                    
         # self.set_bounds(d_width, b, dens)
 
     def swap(self, x0, x):
