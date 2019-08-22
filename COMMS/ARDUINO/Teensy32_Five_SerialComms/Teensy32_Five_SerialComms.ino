@@ -94,20 +94,6 @@ void setup() {
   digitalWrite(DATA_DIR_PIN_4, RS485_TRANSMIT);
   pinMode(DATA_DIR_PIN_5, OUTPUT);
   digitalWrite(DATA_DIR_PIN_5, RS485_TRANSMIT);
-
-  // set up the LCD's number of columns and rows:
-//  lcd.begin(16, 2);
-//  // Print a message to the LCD.
-//  lcd.print("TEENSY: SER TEST");
-//  lcd.setCursor(0, 1);
-//  lcd.print("VER: ");
-//  lcd.print(VERSION);
-//  delay(2000);
-//  lcd.clear();
-//  lcd.setCursor(0, 0);
-//  //lcd.print("PKT:");
-//  lcd.print(" LEN:");
-//  lcd.print(packetSize);
 }
 
 void loop() {
@@ -120,54 +106,24 @@ void loop() {
     while (Serial.available() > 0) {
       uint8_t inByte = Serial.read();
 
-      if (inByte > 127) {
-        inByte = 127;
-      }
-      else if (inByte < 0) {
-        inByte = 0;
-      }
-
-
-      byteBuffer[++byteCount] = inByte;
-
-      checksum = (checksum + inByte) % 65535;
-
-      if (byteCount == 320) {
-        checkByte = inByte;
-      }
-
-      if (byteCount == packetSize) {
+      if (inByte == 255) {
         Serial1.write(byteBuffer, 320);
         Serial1.flush(); // block until sent
-
-        /*
-          packetCount++;
-          /*
-          lcd.setCursor(charIndex, rowIndex);
-          lcd.print(packetCount);
-          lcd.print(" LEN:");
-          lcd.print(byteCount);/*
-          lcd.setCursor(0,1);
-          lcd.print("CHK:");
-          lcd.print(checksum);*/
-//        lcd.setCursor(charIndex, rowIndex);
-//        lcd.print(" LEN:");
-//        lcd.print(byteCount);
-//        lcd.setCursor(0, 1);
-//        lcd.print("CHK:");
-//        lcd.print(checkByte);
-//        lcd.print("  ");
         byteCount = 0;
-        checksum = 0;
-        //        Serial.write('$');
-
       }
 
+      else if (byteCount < packetSize)
+      {
+        if (inByte > 127) {
+          inByte = 127;
+        }
+        else if (inByte < 0) {
+          inByte = 0;
+        }
 
-      //
-      //        lcd.setCursor(charIndex, rowIndex);
-      //        lcd.print(inByte);
-
+        byteBuffer[byteCount] = inByte;
+        ++byteCount;
+      }
     }
   }
 }

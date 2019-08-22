@@ -7,7 +7,6 @@ from time import sleep, time
 import math
 import struct
 from threading import Thread
-from Queue import Queue
 
 #SineWave
 xspacing = 1     # How far apart should each horizontal location be spaced
@@ -70,6 +69,10 @@ sf = 20
 #TOGGLES
 AMOEBA_TOGGLE = False
 SNEK_TOGGLE = False
+EASING_TOGGLE = False
+TEST_TOGGLE = False
+ON_TOGGLE = False
+testIndex = WIDTH + 1 
 
 def genrandi(maxn, num):
     newi = randint(0, maxn)
@@ -90,16 +93,36 @@ nay1 = randint(0, WIDTH)
 s_tracker = []
 
 def sendSerial(infosend, port):
-    global magnetPort, magnetPorts
+    global magnetPorts
 
+    # print(infosend,port)
     if infosend != None:
         # print("sending to", port)
-        for i in infosend:
-            magnetPorts[port].write(i)
-            # magnetPort.write(i)
+        try:
+            # as byte message
+            msg = byteConverter(infosend)
+            magnetPorts[port].write(msg)
+            
+            # as single sends
+            # for i in infosend:
+            #     magnetPorts[port].write(i)
 
-# Send Queue
-# sendQueue = Queue()
+            magnetPorts[port].write(255)
+        except:
+            print("error in send", port)
+            
+def byteConverter(inlist):
+    byteMessage = ''
+    for idx, i in enumerate(inlist):
+        try:
+            byteMessage+=chr(int(round(i)))
+        except:
+            print("BAD NUMBER", i, idx)
+            byteMessage+=chr(int(round(0.0)))
+            
+    return byteMessage
+
+# Send
 # sendThread = Thread(target = sendSerial, args = [None])
 busyCount = 0
 openCount = 0
@@ -113,7 +136,7 @@ def reordinator(initial_list):
         for panel_x in range(5):
             for quad_y in range(2):
                 for quad_x in range(2):
-                    for mag_y in range(4):
+                    for mag_y in  range(4):
                         for mag_x in range(4):
                             index = mag_x + mag_y * 40 + quad_x * 4 + quad_y * 160 + panel_x * 8 + panel_y * 320
                             reordered_list.append(initial_list[index])
@@ -135,9 +158,13 @@ def setup():
      
     #Generating coordinates for snake movements.
     snake(WIDTH)
+    frameRate(1)
+
+ramp_up = True
+power = 0
 
 def draw():
-    global s_tracker, MAGNET_CONNECTION, INITIALIZED, magnetPort, randposX, randposY, npcounter, counter, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, VEL_H, VEL_HPREV, VEL_V, VEL_VPREV, DENS, DENS_PREV, STARTING, BUBBLE_TOGGLE, SNEK_TOGGLE, AMOEBA_TOGGLE, directionX, directionY, amplitude, xspacing, yvalues, toggle, ccounter, theta, location_tracker, sf, angle, period, sendThread, busyCount, openCount, startTime, startFrame
+    global ramp_up, power, testIndex, TEST_TOGGLE, s_tracker, MAGNET_CONNECTION, INITIALIZED, magnetPort, randposX, randposY, npcounter, counter, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, VEL_H, VEL_HPREV, VEL_V, VEL_VPREV, DENS, DENS_PREV, STARTING, BUBBLE_TOGGLE, SNEK_TOGGLE, AMOEBA_TOGGLE, directionX, directionY, amplitude, xspacing, yvalues, toggle, ccounter, theta, location_tracker, sf, angle, period, sendThread, busyCount, openCount, startTime, startFrame
     
     background(0)
     
@@ -171,7 +198,14 @@ def draw():
         calcWave()
         renderWave()
         generate_amoeba()
-    
+        
+    if TEST_TOGGLE:
+        if frameCount % 2 == 0:
+            # print("Index %d On" % testIndex)
+            DENS[testIndex - 1] = 0
+            DENS[testIndex] = 1
+            testIndex+=1
+            
     if(frameCount % 100 == 0):
         VEL_H, VEL_V, VEL_HPREV, VEL_VPREV = FLUID.velocity_step(WIDTH, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, VISCOSITY, TIME_SPACE)
     
@@ -206,77 +240,70 @@ def draw():
             
         carr = count()
         
-        # print(carr)
-        reordered_list = reordinator(carr)
-        
-        # byte message to send
-        byteMessage = ''
-        # for idx, i in enumerate(carr):
-        for idx, i in enumerate(reordered_list):
-            try:
-                byteMessage+=chr(int(round(i)))
-            except:
-                print("BAD NUMBER", i, idx)
-                byteMessage+=chr(int(round(0.0)))
-        # print(carr)
-        # print(carr[820],mouseX, mouseY)
-        # print(reordered_list, len(reordered_list))
-        
-        # dummy values to prove sending
-        # changes every 1000 frames (~3.3 seconds @ 30 fps)
-        # values sent to each arduino alternates by 1
-        # byteMessage = ''
-        # reordered_list = []
-        # dween_num = 0
-        # entry_num = 0
-    
-        # for dweeners in range(5):
-        #     for entries in range(320):
-        #         val = dween_num * 25 + ((frameCount % 30) / 3)
-        #         val = 120 + (frameCount % 30) / 2
-        #         # if val > 127:
-        #         #     val = val / 2
-        #         #     stringByte = ""
-        #         #     for i in range(7):
-        #         #         stringByte = chr(val % 2) + stringByte;
-        #         #         val = val / 2;
-        #         #     stringByte = "-" + stringByte;
-        #         #     byteMessage += stringByte
-        #         # else:
-        #         #     byteMessage += chr(val)
-        #         # if entry_num % 2 == 0:
-        #         #     val+=1                
-        #         reordered_list.append(int(val))
-        #         byteMessage += chr(int(val))
-        #         entry_num+=1
-        #         # magnetPort.write(val)
-        #     dween_num+=1
-        # print(msg_check, len(msg_check), frameCount)
-        # print(byteMessage)
-        # print(msg_check[1])
-        
-        t0 = Thread(target=sendSerial, args=[reordered_list[0:320], 0])
-        t1 = Thread(target=sendSerial, args=[reordered_list[320:640], 1])
-        t2 = Thread(target=sendSerial, args=[reordered_list[640:960], 2])
-        t3 = Thread(target=sendSerial, args=[reordered_list[960:1280], 3])
-        t4 = Thread(target=sendSerial, args=[reordered_list[1280:1600], 4])
+        # if ramp_up:
+        #     for i in range(len(carr)):
+        #         carr[i] = power
+            
+        #     if power == 127: 
+        #         ramp_up = not ramp_up
+        #     else:
+        #         power += 1
+                
+        # else:
+        #     for i in range(len(carr)):
+        #         carr[i] = power
+                
+        #     if power == 0:
+        #         ramp_up = not ramp_up
+        #     else:
+        #         power -= 1
 
-        t0.start()
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-        t0.join()
-        t1.join()
-        t2.join()
-        t3.join()
-        t4.join()
+        # for i in range(0, 1600):
+        #     carr[i] = 127
+            
+        # print(carr[:64])
+        # reordered_list = reordinator(carr)
+        
+        # testing
+        iterator = ((frameCount / 3) %  64)
+        reordered_list = []
+        for i in range(40):
+            appender = [i]*8
+            reordered_list.extend(appender)
+        reordered_list.extend([0]*(320*4))
+        # reordered_list[iterator] = 127
+        print(len(reordered_list))
+        # print(reordered_list[:10])
+        # print(iterator, frameRate)
+        
+        sendSerial(reordered_list[0:320], 0)
+        sendSerial(reordered_list[320:640], 1)
+        sendSerial(reordered_list[640:960], 2)
+        sendSerial(reordered_list[960:1280], 3)
+        sendSerial(reordered_list[1280:1600], 4)
+        
+        # t0 = Thread(target=sendSerial, args=[reordered_list[0:320], 0])
+        # t1 = Thread(target=sendSerial, args=[reordered_list[320:640], 1])
+        # t2 = Thread(target=sendSerial, args=[reordered_list[640:960], 2])
+        # t3 = Thread(target=sendSerial, args=[reordered_list[960:1280], 3])
+        # t4 = Thread(target=sendSerial, args=[reordered_list[1280:1600], 4])
+
+        # t0.start()
+        # t1.start()
+        # t2.start()
+        # t3.start()
+        # t4.start()
+        # t0.join()
+        # t1.join()
+        # t2.join()
+        # t3.join()
+        # t4.join()
         
         # sendSerial(msg_check[0:320], 0)
         # sendSerial(byteMessage)
         nowTime = time()
         if nowTime - startTime >= 1.0:
-            print(nowTime - startTime, frameCount - startFrame, frameCount, reordered_list[0])
+            # print(nowTime - startTime, frameCount - startFrame, frameCount, reordered_list[0])
             startTime = nowTime
             startFrame = frameCount
         # magnetPort.clear()
@@ -297,7 +324,7 @@ def draw():
         #     # print("Thread GOOD!", busyCount)
 
 def keyPressed():
-    global DENS, DENS_PREV, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, BUBBLE_TOGGLE, SNEK_TOGGLE, D_RATE, AMOEBA_TOGGLE, MAGNET_CONNECTION
+    global testIndex, ON_TOGGLE, TEST_TOGGLE, DENS, DENS_PREV, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, BUBBLE_TOGGLE, SNEK_TOGGLE, D_RATE, AMOEBA_TOGGLE, MAGNET_CONNECTION
     
     if ((key == 'R') or (key == 'r')):
         DENS = [0 for _ in xrange(SIZE)]
@@ -355,15 +382,37 @@ def keyPressed():
 
         for i in easelist():
             DENS[FLUID.xy_coordinate(WIDTH, center_x + 1, center_y + 1)] = i
+            
+    if ((key == 'T') or (key == 't')):
+        TEST_TOGGLE = not TEST_TOGGLE
+        testIndex = WIDTH + 1 
+        D_RATE = 0.0
+        
+        if TEST_TOGGLE:
+            print("TESTING ON")
+        else:
+            DENS = [0 for _ in xrange(SIZE)]
+            print("TESTING OFF")
+            
+    if ((key == 'O') or (key == 'o')):
+        ON_TOGGLE = not ON_TOGGLE
+        D_RATE = 0.0
+        
+        if ON_TOGGLE:
+            DENS = [1 for _ in xrange(SIZE)]
+            print("ALL MAGNETS ON")
+        else:
+            DENS = [0 for _ in xrange(SIZE)]
+            print("ALL MAGNETS OFF")
 
 def ratio(x):
     # return (x / 2)
     if(x < 0):
         return 0
-    elif (x * 128 / 32) > 127:
+    elif (x * 128) > 127:
         return 127
     else:
-        return int(x * 128 / 32)
+        return int(x * 128)
     
 def count():
     global DENS, WIDTH, FLUID 
@@ -380,7 +429,7 @@ def count():
     for j in range(WIDTH):
         for i in range(WIDTH):
             counter.append(ratio(DENS[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)]))
-            
+
     return counter
 
 def reset_gridcells():
@@ -417,7 +466,7 @@ class Cell():
         
     def display(self):
         noStroke()
-        fill(0, self.tempDens, 0)
+        fill(0, self.tempDens * 255, 0)
         rect(self.x,self.y,self.w,self.h)
         
 def calcWave():
