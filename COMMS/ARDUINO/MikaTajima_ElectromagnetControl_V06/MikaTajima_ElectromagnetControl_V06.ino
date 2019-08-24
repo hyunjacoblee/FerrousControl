@@ -59,10 +59,10 @@ void setup() {
 //COL = getBoardAddress();
 
 #ifdef COMMS_TEST
-  Serial.println("-----------------------");
-  Serial.println("Electromagnetic Control");
+  Serial.println("----------");
+  Serial.println("EM Control");
   Serial.print("COL: ");Serial.println(COL);
-  Serial.println("-----------------------");
+  Serial.println("----------");
 #endif
 
 #ifdef COL == 1
