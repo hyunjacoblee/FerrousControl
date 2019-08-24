@@ -59,10 +59,10 @@ void setup() {
 //COL = getBoardAddress();
 
 #ifdef COMMS_TEST
-  Serial.println("-------------------------------------------");
+  Serial.println("-----------------------");
   Serial.println("Electromagnetic Control");
   Serial.print("COL: ");Serial.println(COL);
-  Serial.println("-------------------------------------------");
+  Serial.println("-----------------------");
 #endif
 
 #ifdef COL == 1
@@ -107,7 +107,7 @@ void readIncomingSerial(){
         sendDataToMagnets();
 #ifdef COMMS_TEST
         debugSerialBuffer();
-        Serial.flush();
+//        Serial.flush();
 #endif     
         byteCount = 0;
       }
@@ -117,7 +117,7 @@ void readIncomingSerial(){
 
 void debugSerialBuffer(){
   Serial.println("MAG: ");
-  Serial.println("----------------");
+  Serial.println("-----");
   for(int y=0; y<4; y++){
     for(int x=0; x<16; x++){
       Serial.print(MULTIPLIER * uint16_t(magnetOutput[y*16 + x]));

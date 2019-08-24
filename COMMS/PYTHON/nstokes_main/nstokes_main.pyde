@@ -158,7 +158,7 @@ def setup():
      
     #Generating coordinates for snake movements.
     snake(WIDTH)
-    frameRate(1)
+    frameRate(30)
 
 ramp_up = True
 power = 0
@@ -267,14 +267,15 @@ def draw():
         # testing
         iterator = ((frameCount / 3) %  64)
         reordered_list = []
-        for i in range(40):
-            appender = [i]*8
-            reordered_list.extend(appender)
-        reordered_list.extend([0]*(320*4))
+        for i in range(5):
+            for i in range(40):
+                appender = [i]*8
+                reordered_list.extend(appender)
+        # reordered_list.extend([0]*(320*4))
         # reordered_list[iterator] = 127
-        print(len(reordered_list))
-        # print(reordered_list[:10])
-        # print(iterator, frameRate)
+        # print(len(reordered_list))
+        # print(reordered_list)
+        print(frameCount, frameRate)
         
         sendSerial(reordered_list[0:320], 0)
         sendSerial(reordered_list[320:640], 1)
@@ -510,8 +511,11 @@ def initialize_port():
     # magnetPort2 = Serial(this, Serial.list()[4], 1000000)
     # magnetPort = Serial(this, arduinoPort, 115200)
     for each in magnetPortAddresses:
-        serialPort = Serial(this, each, 1000000)
-        magnetPorts.append(serialPort)
+        try:
+            serialPort = Serial(this, each, 1000000)
+            magnetPorts.append(serialPort)
+        except:
+            print("could not initialize port: ", each)
 
     
     INITIALIZED = True

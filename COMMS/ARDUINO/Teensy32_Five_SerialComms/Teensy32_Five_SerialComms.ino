@@ -98,8 +98,8 @@ void setup() {
 
 void loop() {
   //lcd.setCursor(4,0);
-  uint8_t charIndex = 4;
-  uint8_t rowIndex = 0;
+//  uint8_t charIndex = 4;
+//  uint8_t rowIndex = 0;
   if (Serial.available()) {
     // wait a bit for the entire message to arrive
     delay(24);
