@@ -14,5 +14,7 @@ for panel_y in range(5):
                         # index = mag_x + mag_y * 40 + quad_x * 4 + quad_y    + panel_x * 4 + panel_y * 320
                         second_order.append(first_order[index])
                         # second_order.append(first_order[index])
-
+print("creating a set")
+fullset = set(second_order)
+print(len(fullset))
 print(second_order)
