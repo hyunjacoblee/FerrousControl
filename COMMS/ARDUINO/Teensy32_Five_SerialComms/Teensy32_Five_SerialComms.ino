@@ -62,27 +62,16 @@ const int rs = 36, en = 37, d4 = 38, d5 = 39, d6 = 14, d7 = 15;
 const uint16_t packetSize = 320;
 uint8_t byteBuffer[packetSize];
 //int byteBuffer[packetSize];
-//int buffer_1[320];
-//int buffer_2[320];
-//int buffer_3[320];
-//int buffer_4[320];
-//int buffer_5[320];
 uint32_t packetCount = 0;
 uint32_t byteCount = 0;
 uint16_t checksum = 0;
 
 uint8_t checkByte = 0;
 
-//LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
-
 void setup() {
   Serial.begin(1000000);
   Serial1.begin(115200);
   //  Serial1.begin(1000000);
-  //  Serial2.begin(115200);
-  //  Serial3.begin(115200);
-  //  Serial4.begin(115200);
-  //  Serial5.begin(115200);
 
   pinMode(DATA_DIR_PIN_1, OUTPUT);
   digitalWrite(DATA_DIR_PIN_1, RS485_TRANSMIT);
@@ -97,9 +86,7 @@ void setup() {
 }
 
 void loop() {
-  //lcd.setCursor(4,0);
-//  uint8_t charIndex = 4;
-//  uint8_t rowIndex = 0;
+
   if (Serial.available()) {
     // wait a bit for the entire message to arrive
     delay(24);
