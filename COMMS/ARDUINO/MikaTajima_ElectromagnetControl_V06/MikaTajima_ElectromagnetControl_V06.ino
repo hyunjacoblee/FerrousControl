@@ -10,7 +10,7 @@ uint8_t COL = 1;
 
 //#define TESTER
 //#define BOARD_TEST
-//#define COMMS_TEST
+#define COMMS_TEST
 
 #define ADDR_PIN_1   10
 #define ADDR_PIN_2   9
@@ -138,11 +138,13 @@ void readIncomingSerial() {
 }
 
 void debugSerialBuffer() {
-  Serial.println("MAG: ");
+  Serial.print("Mul ");
+  Serial.println(MULTIPLIER);
   Serial.println("-----");
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 16; x++) {
-      Serial.print(MULTIPLIER * magnetOutput[y * 16 + x]);
+//      Serial.print(MULTIPLIER * magnetOutput[y * 16 + x]);
+      Serial.print(magnetOutput[y * 16 + x]);
       Serial.print(",");
     }
     Serial.println();
