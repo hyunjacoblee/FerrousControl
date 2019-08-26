@@ -57,7 +57,7 @@ void setup() {
     controllers[i].setPWMFreq(400);
   }
 
-  //COL = getBoardAddress();
+  COL = getBoardAddress();
 
 #ifdef COMMS_TEST
   Serial.println("----------");
