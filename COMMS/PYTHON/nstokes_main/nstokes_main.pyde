@@ -1,4 +1,5 @@
 add_library('serial')
+add_library('opencv_processing')
 
 import fluid as Fluid
 from easing_functions import *
@@ -8,25 +9,11 @@ import math
 import struct
 from threading import Thread
 
-#SineWave
-xspacing = 1     # How far apart should each horizontal location be spaced
-theta = 50       # Start angle at 0
-amplitude = 23.0    # Height of wave
-period = 300.0      # How many pixels before the wave repeats
-dx = (TWO_PI / period) * xspacing # Value for incrementing X, a function of period and xspacing
-directionX = 0
-directionY = 0
-counter = 0
-angle = 0
-toggle = 1
-ccounter = 0 
-location_tracker = []
-
 #GLOBAL VARIABLES FOR NAVIER_STOKES
 WIDTH = 40
-D_RATE = 2
-VISCOSITY = 0.7
-TIME_SPACE = 0.0005
+D_RATE = 0.05
+VISCOSITY = 0.8
+TIME_SPACE = 0.0001
 
 #GLOBAL GRID 
 GRID =[]
@@ -40,8 +27,6 @@ VEL_VPREV = [0] * SIZE
 VEL_V = [0 for _ in xrange(SIZE)]
 DENS = [0 for _ in xrange(SIZE)]
 DENS_PREV = [0] * SIZE
-
-counter = 0
 
 #Serial Connection
 magnetPort = None
@@ -62,17 +47,17 @@ magnetPorts = []
 INITIALIZED = False
 MAGNET_CONNECTION = False
 
-
 STARTING = 0
-sf = 20
+sf = 1
 
 #TOGGLES
-AMOEBA_TOGGLE = False
 SNEK_TOGGLE = False
 EASING_TOGGLE = False
 TEST_TOGGLE = False
 ON_TOGGLE = False
-testIndex = WIDTH + 1 
+MORPH_TOGGLE = True
+BLACK_OUT = False
+testIndex = WIDTH + 1
 
 def genrandi(maxn, num):
     newi = randint(0, maxn)
@@ -91,6 +76,30 @@ nax1 = randint(0, WIDTH)
 nay1 = randint(0, WIDTH)
 
 s_tracker = []
+
+#Morphing
+render = []
+shape0 = []
+shape1 = []
+
+state = False
+morph_refresh = True
+
+pset_0 = None
+cset_0 = None
+pset_1 = None
+cset_1 = None
+
+img_idx = 0
+rand_lt = [0.003, 0.005, 0.0008]
+randspeed = 0.001 
+
+#EASING Globals
+FadeBox = [0 for _ in range(SIZE)]
+ease_range = easelist()
+FrameIndex = 0
+ease_initiated = False 
+sign = -1
 
 def sendSerial(infosend, port):
     global magnetPorts
@@ -147,27 +156,139 @@ def reordinator(initial_list):
 def setup():
     global FLUID, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, sf, w, yvalues
     background(0)
-    size(WIDTH * sf, WIDTH * sf)
-    
+    size(WIDTH + 2, WIDTH + 2)
+
     #Initializing the Navier Stokes grid.
     GRID = makeGrid(WIDTH)
-    
-    #Sine Wave variables intialization.
-    w = WIDTH * sf / 3
-    yvalues = [0.0] * (w / xspacing)
      
     #Generating coordinates for snake movements.
     snake(WIDTH)
     frameRate(30)
+    strokeWeight(0)
+    smooth(2)
 
 ramp_up = True
 power = 0
 
+timer = randint(750, 1500)
+state = 0
+
 def draw():
-    global ramp_up, power, testIndex, TEST_TOGGLE, s_tracker, MAGNET_CONNECTION, INITIALIZED, magnetPort, randposX, randposY, npcounter, counter, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, VEL_H, VEL_HPREV, VEL_V, VEL_VPREV, DENS, DENS_PREV, STARTING, BUBBLE_TOGGLE, SNEK_TOGGLE, AMOEBA_TOGGLE, directionX, directionY, amplitude, xspacing, yvalues, toggle, ccounter, theta, location_tracker, sf, angle, period, sendThread, busyCount, openCount, startTime, startFrame
+    global BLACK_OUT, state, timer, FrameIndex, sign, ease_initiated, EASING_TOGGLE, MORPH_TOGGLE, rand_lt, randspeed, img_idx, morph_refresh, src, state, render, shape0, shape1, pset_0, cset_0, pset_1, pset_1, src_cv, det_cv, ramp_up, power, testIndex, TEST_TOGGLE, s_tracker, MAGNET_CONNECTION, INITIALIZED, magnetPort, randposX, randposY, GRID, WIDTH, D_RATE, VISCOSITY, TIME_SPACE, VEL_H, VEL_HPREV, VEL_V, VEL_VPREV, DENS, DENS_PREV, STARTING, BUBBLE_TOGGLE, SNEK_TOGGLE, AMOEBA_TOGGLE, sf, sendThread, busyCount, openCount, startTime, startFrame
     
     background(0)
     
+    if timer <= 0:
+        if SNEK_TOGGLE or MORPH_TOGGLE:
+            EASING_TOGGLE = True
+            
+        if BLACK_OUT:
+            BLACK_OUT = False
+            
+            if state:
+                MORPH_TOGGLE = True
+                # this.surface.setSize(WIDTH + 2, WIDTH + 2)   
+            else:
+                SNEK_TOGGLE = True
+                # this.surface.setSize(WIDTH + 2, WIDTH + 2)
+                
+        timer += randint(750, 1500)
+    
+    if SNEK_TOGGLE == True:
+        timer -= 2
+     
+    if MORPH_TOGGLE == True:
+        timer -= 1
+    
+    if BLACK_OUT == True:
+        timer -= 4
+    
+    if EASING_TOGGLE:
+        if SNEK_TOGGLE:
+            SNEK_TOGGLE = False
+            state = 1
+            
+        if MORPH_TOGGLE:
+            MORPH_TOGGLE = False
+            state = 0
+
+        if not ease_initiated:
+            print("Easing Initiated")
+            for i in range(WIDTH):
+                for j in range(WIDTH):
+                    a = QuadEaseInOut(start=DENS[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)], end= 0, duration= 15)
+
+                    y0 = list(map(a.ease, ease_range))
+                    y0.reverse()
+                    # y0.extend(reversed(y0))
+                    # print(y0)
+                    
+                    FadeBox[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)] =  y0
+            
+            FrameIndex = len(ease_range) - 1
+            
+            ease_initiated = True
+            
+        if FrameIndex:
+            # print("Easing in Process")
+            for i in range(WIDTH):
+                for j in range(WIDTH):
+                    DENS[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)] =  FadeBox[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)][FrameIndex]
+            
+            FrameIndex -= 1
+           
+        else:
+            ease_initiated = False
+            EASING_TOGGLE = not EASING_TOGGLE
+            BLACK_OUT = True
+    
+    print("Timer: %d, SNEK: %d, MORPH: %d, BLACK: %d, EASE: %d " % (timer, SNEK_TOGGLE, MORPH_TOGGLE, BLACK_OUT, EASING_TOGGLE))
+        
+    if MORPH_TOGGLE:
+        translate(1, 1)
+        totalDistance = 0
+        
+        if morph_refresh:
+            set_morphing()
+            randspeed = rand_lt[randint(0, len(rand_lt) - 1)]
+
+        for i in range(len(render)):
+            # Are we lerping to the circle or square?
+            if state:
+                v1 = shape0[i]
+                render = shape1
+            else:
+                v1 = shape1[i]
+                render = shape0
+            
+            # Get the vertex we will draw.
+            v2 = render[i]
+            
+            # Lerp to the target
+            # print(v1, v2)
+            v2.lerp(v1, randspeed)
+    
+            # Check how far we are from target.
+            totalDistance += PVector.dist(v1, v2)
+    
+        # # If all the vertices are close, switch shape.
+        if totalDistance < 100:
+            img_idx += 1
+            morph_refresh = True
+            
+        print(totalDistance)
+    
+        # Draw a polygon that makes up all the vertices
+        beginShape()
+        fill(127)
+        for vector in render:
+            vertex(vector.x, vector.y)
+        endShape()
+        
+        loadPixels()
+        
+        DENS = [(p & 255) / float(255) for p in pixels]
+        
     #Snake movement Generation: when the toggle is on, the position coordinates for the snake are generated based on bezier curves stitching. 
     if SNEK_TOGGLE:
         snake_length = 3
@@ -182,23 +303,15 @@ def draw():
                 x = int(s_tracker[st + i][0])
                 y = int(s_tracker[st + i][1])
 
-                bright = 90
+                bright = 1
                 DENS[FLUID.xy_coordinate(WIDTH, x + 1, y + 1)] += bright
                 
-            for i in range(snake_length, 0, -1):
-                x = int(s_tracker[st - i][0])
-                y = int(s_tracker[st - i][1])
+            # for i in range(snake_length, 0, -1):
+            #     x = int(s_tracker[st - i][0])
+            #     y = int(s_tracker[st - i][1])
                 
-                DENS[FLUID.xy_coordinate(WIDTH, x + 1, y + 1)] -= bright / (snake_length + 1 - i)
-  
-    #AMOEBA movements generation
-    if AMOEBA_TOGGLE:
-        directionX += randint(-4,4) * 4
-        directionY -= randint(-1,1)
-        calcWave()
-        renderWave()
-        generate_amoeba()
-        
+            #     DENS[FLUID.xy_coordinate(WIDTH, x + 1, y + 1)] -= bright / (snake_length + 1 - i)
+    
     if TEST_TOGGLE:
         if frameCount % 2 == 0:
             # print("Index %d On" % testIndex)
@@ -206,62 +319,27 @@ def draw():
             DENS[testIndex] = 1
             testIndex+=1
             
-    if(frameCount % 100 == 0):
-        VEL_H, VEL_V, VEL_HPREV, VEL_VPREV = FLUID.velocity_step(WIDTH, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, VISCOSITY, TIME_SPACE)
-    
-        if AMOEBA_TOGGLE:
-            for i in location_tracker[:200]:
-                center_x = i[0]
-                center_y = i[1]
-                
-                bright = 90 
-                DENS[FLUID.xy_coordinate(WIDTH, center_x + 1, center_y + 1)] += bright
-                DENS[FLUID.xy_coordinate(WIDTH, center_x, center_y + 1)] += bright
-                # DENS[FLUID.xy_coordinate(WIDTH, center_x + 1, center_y)] += bright
-                # DENS[FLUID.xy_coordinate(WIDTH, center_x + 2, center_y + 1)] += bright
-                # DENS[FLUID.xy_coordinate(WIDTH, center_x + 1, center_y + 2)] += bright
-            
-            location_tracker = []
+    # if(frameCount % 100 == 0):
+    #     VEL_H, VEL_V, VEL_HPREV, VEL_VPREV = FLUID.velocity_step(WIDTH, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, VISCOSITY, TIME_SPACE)
         
     DENS, DENS_PREV = FLUID.density_step(WIDTH, DENS, DENS_PREV, VEL_H, VEL_V, D_RATE, TIME_SPACE) 
     
-    for i in xrange(WIDTH):
-        for j in xrange(WIDTH):
-            num = FLUID.xy_coordinate(WIDTH, i, j)
-            wind = PVector(VEL_H[num], VEL_V[num])   
-            
-    reset_gridcells()
-    display_grid()
-    
+    # if frameCount % 1 == 0 :
+        
+    if not MORPH_TOGGLE:   
+        for i in xrange(WIDTH):
+            for j in xrange(WIDTH):
+                DENS[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)] -= 0.002
+                
+        reset_gridcells()
+        display_grid()
+        
     #Write to Arduino
     if MAGNET_CONNECTION:
         if not INITIALIZED:
             initialize_port()
-            
-        carr = count()
         
-        # if ramp_up:
-        #     for i in range(len(carr)):
-        #         carr[i] = power
-            
-        #     if power == 127: 
-        #         ramp_up = not ramp_up
-        #     else:
-        #         power += 1
-                
-        # else:
-        #     for i in range(len(carr)):
-        #         carr[i] = power
-                
-        #     if power == 0:
-        #         ramp_up = not ramp_up
-        #     else:
-        #         power -= 1
-
-        # for i in range(0, 1600):
-        #     carr[i] = 127
-            
-        # print(carr[:64])
+        carr = count()
         # reordered_list = reordinator(carr)
         
         # testing
@@ -275,9 +353,7 @@ def draw():
         # reordered_list[iterator] = 127
         # print(len(reordered_list))
         # print(reordered_list)
-
-        print(reordered_list[:10])
-        # print(frameCount, frameRate)
+        print(frameCount, frameRate)
         
         sendSerial(reordered_list[0:320], 0)
         sendSerial(reordered_list[320:640], 1)
@@ -327,7 +403,7 @@ def draw():
         #     # print("Thread GOOD!", busyCount)
 
 def keyPressed():
-    global testIndex, ON_TOGGLE, TEST_TOGGLE, DENS, DENS_PREV, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, BUBBLE_TOGGLE, SNEK_TOGGLE, D_RATE, AMOEBA_TOGGLE, MAGNET_CONNECTION
+    global testIndex, MORPH_TOGGLE, ON_TOGGLE, TEST_TOGGLE, DENS, DENS_PREV, VEL_H, VEL_V, VEL_HPREV, VEL_VPREV, BUBBLE_TOGGLE, SNEK_TOGGLE, D_RATE, MAGNET_CONNECTION
     
     if ((key == 'R') or (key == 'r')):
         DENS = [0 for _ in xrange(SIZE)]
@@ -370,16 +446,16 @@ def keyPressed():
             print("MAGNET CONNECTION ON")
         else:
             print("MAGNET CONNECTION OFF")
-        
-    if ((key == 'A') or (key == 'a')):
-        D_RATE = 0.6
-        AMOEBA_TOGGLE = not AMOEBA_TOGGLE
-        if AMOEBA_TOGGLE:
-            print("AMOEBA ON")
-        else:
-            print("AMOEBA OFF")
-        
+    
     if ((key == 'M') or (key == 'm')):
+        MORPH_TOGGLE = not MORPH_TOGGLE
+        
+        if MORPH_TOGGLE:
+            print("MORPH ON")
+        else:
+            print("MORPH OFF")
+    
+    if ((key == 'N') or (key == 'n')):
         center_x = mouseX // sf
         center_y = mouseY // sf
 
@@ -421,14 +497,7 @@ def count():
     global DENS, WIDTH, FLUID 
     counter = []
     
-    # original counter - appeared to be top to bottom, then left to right
-    # when using 'F' as tester
-    # for i in range(WIDTH):
-    #     for j in range(WIDTH):
-    #         counter.append(ratio(DENS[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)]))
-     
     # current counter - goes left to right, then top to bottom
-    # when using 'F' as tester
     for j in range(WIDTH):
         for i in range(WIDTH):
             counter.append(ratio(DENS[FLUID.xy_coordinate(WIDTH, i + 1, j + 1)]))
@@ -471,35 +540,6 @@ class Cell():
         noStroke()
         fill(0, self.tempDens * 255, 0)
         rect(self.x,self.y,self.w,self.h)
-        
-def calcWave():
-    global theta, directionxSWITCH
-        
-    theta += 0.5
-    
-    # For every x varlue, calculate a y value with sine function
-    x = theta
-    for i in range(len(yvalues)):
-        yvalues[i] = sin(x) * amplitude
-        x += dx
-
-def renderWave():
-    global counter, angle, sf, location_tracker, randposX, randposY
-    noStroke()
-    fill(255)
-        
-    for x in range(len(yvalues)):
-        val_x = x * xspacing + directionX
-        val_y = (height/2 + yvalues[x]) + directionY
-        
-        val_x = ((val_x) * (cos(angle)) - (val_y) * (sin(angle))) // sf
-        val_y = ((val_x) * (sin(angle)) + (val_y) * (cos(angle))) // sf
-
-        location_tracker.append((val_x, val_y))
-        
-def generate_amoeba():
-    global angle, period, xspacing
-    angle -= ((TWO_PI / period) * xspacing)*25
 
 #Port Initialization
 def initialize_port():
@@ -513,11 +553,8 @@ def initialize_port():
     # magnetPort2 = Serial(this, Serial.list()[4], 1000000)
     # magnetPort = Serial(this, arduinoPort, 115200)
     for each in magnetPortAddresses:
-        try:
-            serialPort = Serial(this, each, 1000000)
-            magnetPorts.append(serialPort)
-        except:
-            print("could not initialize port: ", each)
+        serialPort = Serial(this, each, 1000000)
+        magnetPorts.append(serialPort)
 
     
     INITIALIZED = True
@@ -546,3 +583,54 @@ def snake(w):
         
     nax = nax1
     nay = nay1
+    
+def linspace(a, b, n=100):
+    if n < 2:
+        return b
+    diff = (float(b) - a)/(n - 1)
+    return [diff * i + a  for i in range(n)]
+
+def set_morphing():
+    global img_idx, morph_refresh, render, shape0, shape1, pset_0, cset_0, pset_1, pset_1, src_cv, det_cv
+    
+    render = []
+    shape0 = []
+    shape1 = []
+
+    src = loadImage("data/" + str(img_idx % 8) + ".png")
+    det = loadImage("data/" + str((img_idx + 1) % 8) + ".png")
+    
+    # src.resize(500, 500)
+    # det.resize(500, 500)
+    
+    src_cv = OpenCV(this, src)
+    det_cv = OpenCV(this, det)
+    
+    tnum = 40
+    src_cv.threshold(tnum)
+    det_cv.threshold(tnum)
+
+    clist = [len(c.getPoints()) for c in src_cv.findContours()]
+    clist1 = [len(c.getPoints()) for c in det_cv.findContours()]
+    
+    mi = clist.index(max(clist))
+    mi1 = clist1.index(max(clist1))
+    
+    pset_0 = src_cv.findContours()[mi].getPoints()
+    cset_0 = src_cv.findContours()[mi]
+    
+    pset_1 = det_cv.findContours()[mi1].getPoints()
+    cset_1 = det_cv.findContours()[mi1]
+    
+    lt1 = linspace(0, len(pset_0) - 1, 200)
+    lt2 = linspace(0, len(pset_1) - 1, 200)
+    
+    for i in lt1:
+        shape0.append(pset_0[int(i)])
+
+    for i in lt2:
+        shape1.append(pset_1[int(i)])
+        
+        render.append(pset_1[int(i)])
+    
+    morph_refresh = False
