@@ -10,7 +10,7 @@ uint8_t COL = 1;
 
 //#define TESTER
 //#define BOARD_TEST
-#define COMMS_TEST
+//#define COMMS_TEST
 
 #define ADDR_PIN_1   10
 #define ADDR_PIN_2   9
