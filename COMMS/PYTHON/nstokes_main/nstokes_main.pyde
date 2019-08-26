@@ -275,7 +275,9 @@ def draw():
         # reordered_list[iterator] = 127
         # print(len(reordered_list))
         # print(reordered_list)
-        print(frameCount, frameRate)
+
+        print(reordered_list[:10])
+        # print(frameCount, frameRate)
         
         sendSerial(reordered_list[0:320], 0)
         sendSerial(reordered_list[320:640], 1)

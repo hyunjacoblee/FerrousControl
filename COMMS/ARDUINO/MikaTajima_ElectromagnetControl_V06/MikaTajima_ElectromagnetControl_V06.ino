@@ -1,4 +1,4 @@
-  // include the library code:
+// include the library code:
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
@@ -47,40 +47,45 @@ uint8_t indicator = 0;
 
 
 void setup() {
-  Serial.begin(115200);
+  //  Serial.begin(115200);
+  Serial.begin(250000);
   pinMode(DATA_DIR_PIN, OUTPUT);
   digitalWrite(DATA_DIR_PIN, RS485_RECEIVE);
 
-  for(int i=0; i<4; i++){
+  for (int i = 0; i < 4; i++) {
     controllers[i].begin();
     controllers[i].setPWMFreq(400);
   }
 
-//COL = getBoardAddress();
+  //COL = getBoardAddress();
 
 #ifdef COMMS_TEST
   Serial.println("----------");
   Serial.println("EM Control");
-  Serial.print("COL: ");Serial.println(COL);
+  Serial.print("COL: "); Serial.println(COL);
   Serial.println("----------");
 #endif
 
-#ifdef COL == 1
-START_POS = 0;
-STOP_POS = 64;
-#elif  COL == 2
-START_POS =  64;
-STOP_POS  =  128;
-#elif  COL == 3
-START_POS = 128;
-STOP_POS  = 192;
-#elif  COL == 4
-START_POS =  192;
-STOP_POS = 256;
-#elif  COL == 5
-START_POS = 256;
-STOP_POS = 320;
-#endif
+  if (COL == 1) {
+    START_POS = 0;
+    STOP_POS = 64;
+  }
+  else if (COL == 2) {
+    START_POS =  64;
+    STOP_POS  =  128;
+  }
+  else if (COL == 3) {
+    START_POS = 128;
+    STOP_POS  = 192;
+  }
+  else if (COL == 4) {
+    START_POS =  192;
+    STOP_POS = 256;
+  }
+  else if (COL == 5) {
+    START_POS = 256;
+    STOP_POS = 320;
+  }
 
   Wire.setClock(400000);
 }
@@ -93,91 +98,94 @@ void loop() {
 #endif
 }
 
-void readIncomingSerial(){
+void readIncomingSerial() {
   if (Serial.available()) {
     //delay(10);
     while (Serial.available() > 0) {
       uint8_t inByte = Serial.read();
-      if ((byteCount >= START_POS)&&(byteCount < STOP_POS)){
+      if ((byteCount >= START_POS) && (byteCount < STOP_POS)) {
         magnetOutput[byteCount] = constrain(inByte, 0, 127);
       }
+
       byteCount++;
 
-      if (byteCount == packetSize) {
+      if (inByte == 255) {
+        //      if (byteCount == packetSize) {
         sendDataToMagnets();
+
 #ifdef COMMS_TEST
         debugSerialBuffer();
-//        Serial.flush();
-#endif     
+        //        Serial.flush();
+#endif
         byteCount = 0;
       }
     }
   }
 }
 
-void debugSerialBuffer(){
+void debugSerialBuffer() {
   Serial.println("MAG: ");
   Serial.println("-----");
-  for(int y=0; y<4; y++){
-    for(int x=0; x<16; x++){
-      Serial.print(MULTIPLIER * uint16_t(magnetOutput[y*16 + x]));
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 16; x++) {
+      Serial.print(MULTIPLIER * magnetOutput[y * 16 + x]);
       Serial.print(",");
     }
-  Serial.println();
-  Serial.println();
+    Serial.println();
+    Serial.println();
   }
 }
 
 
-void boardTest(){
-  for (uint16_t i=0; i<4096; i += 8) {
-    for (uint8_t pwmnum=0; pwmnum < 16; pwmnum++) {
-      controllers[0].setPWM(pwmnum, 0, (i + (4096/16)*pwmnum) % 4096 );
-      controllers[1].setPWM(pwmnum, 0, (i + (4096/16)*pwmnum) % 4096 );
-      controllers[2].setPWM(pwmnum, 0, (i + (4096/16)*pwmnum) % 4096 );
-      controllers[3].setPWM(pwmnum, 0, (i + (4096/16)*pwmnum) % 4096 );
+void boardTest() {
+  for (uint16_t i = 0; i < 4096; i += 8) {
+    for (uint8_t pwmnum = 0; pwmnum < 16; pwmnum++) {
+      controllers[0].setPWM(pwmnum, 0, (i + (4096 / 16)*pwmnum) % 4096 );
+      controllers[1].setPWM(pwmnum, 0, (i + (4096 / 16)*pwmnum) % 4096 );
+      controllers[2].setPWM(pwmnum, 0, (i + (4096 / 16)*pwmnum) % 4096 );
+      controllers[3].setPWM(pwmnum, 0, (i + (4096 / 16)*pwmnum) % 4096 );
     }
   }
 }
 
-void boardTestQuarterPower(){
-  for (uint16_t i=0; i<1024; i += 8) {
-    for (uint8_t pwmnum=0; pwmnum < 16; pwmnum++) {
-      controllers[0].setPWM(pwmnum, 0, (i + (1024/16)*pwmnum) % 1024 );
-      controllers[1].setPWM(pwmnum, 0, (i + (1024/16)*pwmnum) % 1024 );
-      controllers[2].setPWM(pwmnum, 0, (i + (1024/16)*pwmnum) % 1024 );
-      controllers[3].setPWM(pwmnum, 0, (i + (1024/16)*pwmnum) % 1024 );
+void boardTestQuarterPower() {
+  for (uint16_t i = 0; i < 1024; i += 8) {
+    for (uint8_t pwmnum = 0; pwmnum < 16; pwmnum++) {
+      controllers[0].setPWM(pwmnum, 0, (i + (1024 / 16)*pwmnum) % 1024 );
+      controllers[1].setPWM(pwmnum, 0, (i + (1024 / 16)*pwmnum) % 1024 );
+      controllers[2].setPWM(pwmnum, 0, (i + (1024 / 16)*pwmnum) % 1024 );
+      controllers[3].setPWM(pwmnum, 0, (i + (1024 / 16)*pwmnum) % 1024 );
     }
   }
 }
 
-void boardTestThreeEighthsPower(){
-  for (uint16_t i=0; i<1536; i += 8) {
-    for (uint8_t pwmnum=0; pwmnum < 16; pwmnum++) {
-      controllers[0].setPWM(pwmnum, 0, (i + (1536/16)*pwmnum) % 1536 );
-      controllers[1].setPWM(pwmnum, 0, (i + (1536/16)*pwmnum) % 1536 );
-      controllers[2].setPWM(pwmnum, 0, (i + (1536/16)*pwmnum) % 1536 );
-      controllers[3].setPWM(pwmnum, 0, (i + (1536/16)*pwmnum) % 1536 );
+void boardTestThreeEighthsPower() {
+  for (uint16_t i = 0; i < 1536; i += 8) {
+    for (uint8_t pwmnum = 0; pwmnum < 16; pwmnum++) {
+      controllers[0].setPWM(pwmnum, 0, (i + (1536 / 16)*pwmnum) % 1536 );
+      controllers[1].setPWM(pwmnum, 0, (i + (1536 / 16)*pwmnum) % 1536 );
+      controllers[2].setPWM(pwmnum, 0, (i + (1536 / 16)*pwmnum) % 1536 );
+      controllers[3].setPWM(pwmnum, 0, (i + (1536 / 16)*pwmnum) % 1536 );
     }
   }
 }
 
-void boardTestHalfPower(){
-  for (uint16_t i=0; i<2048; i += 8) {
-    for (uint8_t pwmnum=0; pwmnum < 16; pwmnum++) {
-      controllers[0].setPWM(pwmnum, 0, (i + (2048/16)*pwmnum) % 2048 );
-      controllers[1].setPWM(pwmnum, 0, (i + (2048/16)*pwmnum) % 2048 );
-      controllers[2].setPWM(pwmnum, 0, (i + (2048/16)*pwmnum) % 2048 );
-      controllers[3].setPWM(pwmnum, 0, (i + (2048/16)*pwmnum) % 2048 );
+void boardTestHalfPower() {
+  for (uint16_t i = 0; i < 2048; i += 8) {
+    for (uint8_t pwmnum = 0; pwmnum < 16; pwmnum++) {
+      controllers[0].setPWM(pwmnum, 0, (i + (2048 / 16)*pwmnum) % 2048 );
+      controllers[1].setPWM(pwmnum, 0, (i + (2048 / 16)*pwmnum) % 2048 );
+      controllers[2].setPWM(pwmnum, 0, (i + (2048 / 16)*pwmnum) % 2048 );
+      controllers[3].setPWM(pwmnum, 0, (i + (2048 / 16)*pwmnum) % 2048 );
     }
   }
 }
 
 
-void sendDataToMagnets(){
-  for(int y=0; y<4; y++){
-    for(int x=0; x<16; x++){
-      controllers[y].setPWM((16 - x), 0, (MULTIPLIER * uint16_t(magnetOutput[y*16 + x])));
+void sendDataToMagnets() {
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 16; x++) {
+      controllers[y].setPWM((16 - x), 0, (MULTIPLIER * uint16_t(magnetOutput[y * 16 + x])));
     }
   }
 }
@@ -221,13 +229,13 @@ void sendDataToMagnetsOLD() {
   }
 }
 
-uint8_t getBoardAddress(){
+uint8_t getBoardAddress() {
   uint8_t currentAddress = 0;
-  for(int i=0; i<6; i++){
+  for (int i = 0; i < 6; i++) {
     pinMode(ADDRESS_PIN[i], INPUT_PULLUP);
     delay(5);
     bool value = digitalRead(ADDRESS_PIN[i]);
-    uint8_t addedValue = (1<<i);
+    uint8_t addedValue = (1 << i);
     currentAddress += (!value * addedValue);
   }
   return currentAddress;
