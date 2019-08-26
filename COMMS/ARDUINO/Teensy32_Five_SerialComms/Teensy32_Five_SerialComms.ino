@@ -1,3 +1,8 @@
+/*
+  
+
+*/
+
 #define VERSION 3.20
 #define DATA_DIR_PIN_1  2
 #define DATA_DIR_PIN_2  6
@@ -26,6 +31,7 @@ void setup() {
   Serial.begin(1000000);
   Serial1.begin(250000);
   //  Serial1.begin(1000000);
+
 
   pinMode(DATA_DIR_PIN_1, OUTPUT);
   digitalWrite(DATA_DIR_PIN_1, RS485_TRANSMIT);
