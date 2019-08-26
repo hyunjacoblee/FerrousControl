@@ -104,11 +104,21 @@ void readIncomingSerial() {
     while (Serial.available() > 0) {
       uint8_t inByte = Serial.read();
       if ((byteCount >= START_POS) && (byteCount < STOP_POS)) {
-        magnetOutput[byteCount] = constrain(inByte, 0, 127);
+        magnetOutput[byteCount % 64] = constrain(inByte, 0, 127);
+//        Serial.println("MAGNET");
       }
 
       byteCount++;
 
+//      Serial.print(byteCount);
+//      Serial.print(",");
+//      Serial.print(START_POS);
+//      Serial.print(",");
+//      Serial.print(STOP_POS);
+//      Serial.print(",");
+//      Serial.print(inByte);
+//      Serial.println();
+      
       if (inByte == 255) {
         //      if (byteCount == packetSize) {
         sendDataToMagnets();
@@ -117,6 +127,10 @@ void readIncomingSerial() {
         debugSerialBuffer();
         //        Serial.flush();
 #endif
+        byteCount = 0;
+      }
+
+      else if (byteCount > packetSize){
         byteCount = 0;
       }
     }
